@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Invoice</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <h1>Invoice Generator</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul>
+          {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    <form action="/generate_invoice" method="post">
+        <h3>Customer Details:</h3>
+        <label>Customer Name:</label>
+        <input type="text" name="customer_name" required><br>
+        <label>Customer Address:</label>
+        <input type="text" name="customer_address" required><br>
+        <label>Customer Phone:</label>
+        <input type="text" name="customer_phone" required><br>
+        <label>Invoice Number:</label>
+        <input type="text" name="invoice_number" required><br>
+        <label>Due Date:</label>
+        <input type="date" name="due_date" required><br>
+        <h3>Items:</h3>
+        <div id="items">
+            <div>
+                <select name="item_name" onchange="updatePrice(this)" required>
+                    <option value="" disabled selected>Select Item</option>
+                    {% for item, price in items.items() %}
+                        <option value="{{ item }}">{{ item }}</option>
+                    {% endfor %}
+                </select>
+                <input type="number" name="quantity" placeholder="Quantity" oninput="calculateTotal(this)" required>
+                <input type="text" name="unit_price" placeholder="Unit Price" readonly>
+                <input type="text" name="total_price" placeholder="Total Price" readonly>
+            </div>
+        </div>
+        <button type="button" onclick="addItem()">Add Item</button><br><br>
+        <button type="submit">Generate Invoice</button>
+    </form>
+    <script>
+        function updatePrice(select) {
+            const itemName = select.value;
+            fetch('/get_price', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ item_name: itemName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.price) {
+                    const parent = select.parentElement;
+                    parent.querySelector('input[name="unit_price"]').value = data.price;
+                    calculateTotal(parent.querySelector('input[name="quantity"]'));
+                }
+            });
+        }
+        function calculateTotal(quantityInput) {
+            const parent = quantityInput.parentElement;
+            const unitPrice = parseFloat(parent.querySelector('input[name="unit_price"]').value || 0);
+            const quantity = parseInt(quantityInput.value || 0);
+            parent.querySelector('input[name="total_price"]').value = unitPrice * quantity;
+        }
+        function addItem() {
+            const itemsDiv = document.getElementById('items');
+            const newItem = itemsDiv.firstElementChild.cloneNode(true);
+            newItem.querySelectorAll('input').forEach(input => input.value = '');
+            itemsDiv.appendChild(newItem);
+        }
+    </script>
+</body>
+</html>
