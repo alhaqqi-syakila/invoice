@@ -39,7 +39,6 @@
                     {% endfor %}
                 </select>
                 <input type="number" name="quantity" placeholder="Quantity" oninput="calculateTotal(this)" required>
-                <input type="text" name="unit_price" placeholder="Unit Price" readonly>
                 <input type="text" name="total_price" placeholder="Total Price" readonly>
             </div>
         </div>
@@ -58,17 +57,18 @@
             .then(data => {
                 if (data.price) {
                     const parent = select.parentElement;
-                    parent.querySelector('input[name="unit_price"]').value = data.price;
                     calculateTotal(parent.querySelector('input[name="quantity"]'));
                 }
             });
         }
+
         function calculateTotal(quantityInput) {
             const parent = quantityInput.parentElement;
             const unitPrice = parseFloat(parent.querySelector('input[name="unit_price"]').value || 0);
             const quantity = parseInt(quantityInput.value || 0);
             parent.querySelector('input[name="total_price"]').value = unitPrice * quantity;
         }
+
         function addItem() {
             const itemsDiv = document.getElementById('items');
             const newItem = itemsDiv.firstElementChild.cloneNode(true);
